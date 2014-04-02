@@ -1,0 +1,32 @@
+WizCalc-Potential version 0.0.1
+
+猫Wiz イベントカード(進化素材が自分自身)潜在能力開放計算式
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+Alternatively, to install with Module::Build, you can use the following commands:
+
+	perl Build.PL
+	./Build
+	./Build test
+	./Build install
+
+
+DEPENDENCIES
+
+None.
+
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2014, Masanori Hara
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
