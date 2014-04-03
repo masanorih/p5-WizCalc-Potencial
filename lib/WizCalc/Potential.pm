@@ -7,12 +7,41 @@ use Carp;
 use Exporter 'import';
 our @EXPORT = qw(calc_potential);
 
-use version; our $VERSION = qv('0.0.1');
-
+use version; our $VERSION = qv('0.0.2');
 
 sub calc_potential {
     my(@potencial) = @_;
 
+    my( $max_potencial, $rmax ) = max_potencial(@potencial);
+    my $ev_cost = scalar @potencial;
+
+    my $result;
+    for my $i ( 1 .. $max_potencial ) {
+        my $n = $rmax->{$i};
+        #warn "n = $n";
+        my $y = $n * 2 + 1;
+        my $ncost = $n + $i - 1;
+        if ( $max_potencial == $y ) {
+            #warn "max_potencial($max_potencial) == y($y)";
+            $result = ( $ev_cost + $ncost ) * 2;
+            last;
+        }
+        elsif ( $max_potencial < $y ) {
+            #warn "max_potencial($max_potencial) < y($y)";
+            my $o = $y - $ncost;
+            #warn "i = $i, n = $n";
+            #warn "ncost = $ncost, o = $o";
+            $result = ( $ev_cost + $ncost ) * 2 - $o;
+            last;
+        }
+        #warn "max_potencial($max_potencial) > y($y)";
+    }
+    #warn "result = $result";
+    $result;
+}
+
+sub max_potencial {
+    my(@potencial) = @_;
     my $rmax;
     my $max_potencial = $potencial[-1];
     for my $pot ( 1 .. $max_potencial ) {
@@ -25,26 +54,8 @@ sub calc_potential {
             }
         }
     }
-    #warn "max_potencial = $max_potencial";
     #warn Dumper $rmax;
-
-    my $ev_cost = scalar @potencial;
-    # 0..2 is primal
-    my @table;
-    push @table, $ev_cost;
-    push @table, $ev_cost + $rmax->{1};
-    push @table, $ev_cost + $potencial[0] + $rmax->{2};
-    # for big number it just sum 0-2
-    for my $i ( 3 .. $max_potencial ) {
-        my $prime_factor = get_prime_factor($i);
-        #warn "i=$i " . Dumper $prime_factor;
-        my $pot;
-        for my $j ( @{$prime_factor} ) {
-            $pot += $table[$j];
-        }
-        push @table, $pot;
-    }
-    return @table;
+    return( $max_potencial, $rmax );
 }
 
 sub get_prime_factor {
@@ -71,7 +82,7 @@ WizCalc::Potential - 猫Wiz イベントカード(進化素材が自分自身)�
 
 =head1 VERSION
 
-This document describes WizCalc::Potential version 0.0.1
+This document describes WizCalc::Potential version 0.0.2
 
 
 =head1 SYNOPSIS
@@ -91,24 +102,12 @@ L<http://colopl.co.jp/magicianwiz/>.
 
     my @result = calc_potential( 1, 2, 4 ));
 
-    各グレードの最大潜在能力を入力すると、最終クラス(通常はS)の
-    潜在能力開放にどれだけの素のカードが必要なのかを
-    潜在能力開放数分配列にして返す。
+    各グレードの最大潜在能力を入力すると、
+    最終ランク(通常はS)の潜在能力全開放に必要な素のカード枚数を返す。
 
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
 =back
-
 
 =head1 DEPENDENCIES
 
