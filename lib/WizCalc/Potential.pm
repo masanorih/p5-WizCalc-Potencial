@@ -9,37 +9,58 @@ our @EXPORT = qw(calc_potential);
 
 use version; our $VERSION = qv('0.0.2');
 
+=pod
+
+最終目標である最高ランク、潜在能力全開放状態のカード(X)を得るために
+必要最低限のカードは何枚か。
+
+=cut
+
 sub calc_potential {
     my(@potencial) = @_;
 
     my( $max_potencial, $rmax ) = max_potencial(@potencial);
-    my $ev_cost = scalar @potencial;
-
-    my $result;
-    for my $i ( 1 .. $max_potencial ) {
-        my $n = $rmax->{$i};
-        #warn "n = $n";
-        my $y = $n * 2 + 1;
-        my $ncost = $n + $i - 1;
-        if ( $max_potencial == $y ) {
-            #warn "max_potencial($max_potencial) == y($y)";
-            $result = ( $ev_cost + $ncost ) * 2;
-            last;
-        }
-        elsif ( $max_potencial < $y ) {
-            #warn "max_potencial($max_potencial) < y($y)";
-            my $o = $y - $ncost;
-            #warn "i = $i, n = $n";
-            #warn "ncost = $ncost, o = $o";
-            $result = ( $ev_cost + $ncost ) * 2 - $o;
-            last;
-        }
-        #warn "max_potencial($max_potencial) > y($y)";
+    #warn "max_potencial = " . Dumper $rmax;
+    my $ev_cost = scalar @potencial * 2;
+    my $costs = potencial_cost($rmax);
+    # is even
+    if ( 0 == $max_potencial % 2 ) {
+        my $half   = $max_potencial / 2;
+        my $p_cost = $costs->{$half} + $costs->{ $half - 1 };
+        return $ev_cost + $p_cost;
     }
-    #warn "result = $result";
-    $result;
+    else {
+        my $half   = int $max_potencial / 2;
+        my $p_cost = $costs->{$half} + $costs->{ $half + 1 };
+        return $ev_cost + $p_cost;
+    }
+
+    #my $result;
+    #for my $i ( 1 .. $max_potencial ) {
+    #    my $n = $rmax->{$i};
+    #    #warn "n = $n";
+    #    my $y = $n * 2 + 1;
+    #    my $ncost = $n + $i - 1;
+    #    if ( $max_potencial == $y ) {
+    #        #warn "max_potencial($max_potencial) == y($y)";
+    #        $result = ( $ev_cost + $ncost ) * 2;
+    #        last;
+    #    }
+    #    elsif ( $max_potencial < $y ) {
+    #        #warn "max_potencial($max_potencial) < y($y)";
+    #        my $o = $y - $ncost;
+    #        #warn "i = $i, n = $n";
+    #        #warn "ncost = $ncost, o = $o";
+    #        $result = ( $ev_cost + $ncost ) * 2 - $o;
+    #        last;
+    #    }
+    #    #warn "max_potencial($max_potencial) > y($y)";
+    #}
+    ##warn "result = $result";
+    #$result;
 }
 
+# potencial => rank
 sub max_potencial {
     my(@potencial) = @_;
     my $rmax;
@@ -54,22 +75,38 @@ sub max_potencial {
             }
         }
     }
-    #warn Dumper $rmax;
     return( $max_potencial, $rmax );
 }
 
-sub get_prime_factor {
-    my $num = shift;
-    $num--;
-
-    return( [1, 1] ) if $num == 2;
-    my $even = int $num / 2;
-    my $one  = $num % 2;
-
-    my @result;
-    push @result, 1 if $one;
-    push @result, 2 for (1 .. $even);
-    return \@result;
+# potencial => cost,
+sub potencial_cost {
+    my $rmax = shift;
+    my $potencial_cost;
+    my $p_rank;
+    my $p_cost;
+    for my $pot ( sort keys %{$rmax} ) {
+        my $rank = $rmax->{$pot};
+        if ($p_rank) {
+            if ( $rank == $p_rank ) {
+                $potencial_cost->{$pot} = $p_cost + 1;
+                $p_cost = $potencial_cost->{$pot};
+            }
+            else {
+                my $diff = $rank - $p_rank;
+                if ( 1 == $diff ) {
+                    $potencial_cost->{$pot} = $p_cost + 1 + $diff;
+                }
+                $p_rank = $rank;
+            }
+        }
+        else {
+            $potencial_cost->{$pot} = $rank;
+            $p_rank = $rank;
+            $p_cost = $potencial_cost->{$pot};
+        }
+        last if $pot == 3;
+    }
+    return $potencial_cost;
 }
 
 1;
